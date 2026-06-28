@@ -51,7 +51,7 @@ export function EducationView({ setActiveView }) {
                  <Library className="w-5 h-5" />
               </div>
               <div>
-                 <h3 className="text-[11px] font-black text-violet-600 uppercase tracking-[0.2em]">Resource Library v5.2</h3>
+                 <h3 className="text-[11px] font-black text-violet-600 uppercase tracking-[0.2em]">Resource Library v7.0</h3>
               </div>
            </div>
            <h1 className="text-4xl font-black text-slate-950 uppercase tracking-tighter leading-none mb-2">

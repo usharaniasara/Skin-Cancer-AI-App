@@ -25,7 +25,7 @@ export function DashboardStats({ scans, inferenceLoad }) {
           </div>
           <div>
             <p className="text-[11px] font-black text-[#34d399] uppercase tracking-widest leading-none mb-1">Analysis Core</p>
-            <p className="text-lg font-black text-white">Nebula-Engine v5.2</p>
+            <p className="text-lg font-black text-white">Nebula-Engine v7.0</p>
           </div>
         </div>
         <Badge variant="success">Online</Badge>

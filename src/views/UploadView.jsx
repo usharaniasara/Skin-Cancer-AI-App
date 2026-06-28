@@ -291,7 +291,7 @@ export function UploadView({ setActiveView, authToken, onScanComplete }) {
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider leading-none">Pathology Engine</h3>
-                <p className="text-[11px] font-bold text-violet-600 uppercase tracking-widest mt-1">Neural Analysis v5.2</p>
+                <p className="text-[11px] font-bold text-violet-600 uppercase tracking-widest mt-1">Neural Analysis v7.0</p>
               </div>
             </div>
 

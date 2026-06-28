@@ -190,7 +190,7 @@ export function AuthView({ setAuthToken }) {
               </h1>
               <div className="flex items-center justify-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Diagnostic Sync v5.2 Active</p>
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Diagnostic Sync v7.0 Active</p>
               </div>
             </div>
           </div>

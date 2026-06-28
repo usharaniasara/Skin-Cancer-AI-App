@@ -82,7 +82,7 @@ function SettingsForm({ user, onClose, onUpdateUser }) {
           </div>
           <div>
             <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none mb-1">Clinic Settings</h3>
-            <p className="text-[11px] font-black text-violet-600 uppercase tracking-widest leading-none">Diagnostic Link Registry v5.2</p>
+            <p className="text-[11px] font-black text-violet-600 uppercase tracking-widest leading-none">Diagnostic Link Registry v7.0</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl hover:bg-slate-50 transition-all">
@@ -160,7 +160,7 @@ function SettingsForm({ user, onClose, onUpdateUser }) {
       </div>
 
       <div className="mt-12 pt-8 border-t border-slate-100 flex items-center justify-between">
-         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Audit Registry v5.2 • Encrypted</p>
+         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Audit Registry v7.0 • Encrypted</p>
          <Button variant="primary" onClick={onClose} className="px-10 h-14 !rounded-2xl bg-slate-900 text-white hover:bg-black shadow-2xl uppercase font-black tracking-widest text-xs transition-all active:scale-95">
             Verify & Exit
          </Button>
