@@ -505,7 +505,7 @@ export function UploadView({ setActiveView, authToken, onScanComplete }) {
                     </Card>
 
                     <AnimatePresence>
-                        {currentSelectedItem && currentSelectedItem.result && (
+                        {currentSelectedItem && currentSelectedItem.result && currentSelectedItem.result.is_valid && (
                             <motion.div key={`report-${currentSelectedItem.id}`} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }}>
                                 <Card className={`p-6 md:p-8 premium-card border-x-4 border-b-4 border-t border-white bg-white shadow-2xl relative overflow-hidden ${currentSelectedItem.result.is_malignant ? 'border-rose-500' : 'border-violet-500'}`}>
                                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none transition-transform group-hover:scale-110">
@@ -582,6 +582,62 @@ export function UploadView({ setActiveView, authToken, onScanComplete }) {
                                         </div>
                                     </div>
                                     
+                                    {/* Detailed Clinical Info */}
+                                    <div className="mt-8 pt-6 border-t border-slate-50 relative z-10">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <Badge className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${
+                                                currentSelectedItem.result.severity === 'High' ? 'bg-rose-100 text-rose-700' :
+                                                currentSelectedItem.result.severity === 'Moderate' ? 'bg-amber-100 text-amber-700' :
+                                                'bg-emerald-100 text-emerald-700'
+                                            }`}>
+                                                Severity: {currentSelectedItem.result.severity || 'Unknown'}
+                                            </Badge>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Info className="w-3.5 h-3.5"/> Overview</h5>
+                                                    <p className="text-sm font-medium text-slate-600 leading-relaxed">{currentSelectedItem.result.explanation}</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Activity className="w-3.5 h-3.5"/> Typical Symptoms</h5>
+                                                    <p className="text-sm font-medium text-slate-600 leading-relaxed">{currentSelectedItem.result.symptoms}</p>
+                                                </div>
+                                                <div className="space-y-2 p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                                                    <h5 className="text-[11px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2"><ShieldAlert className="w-3.5 h-3.5"/> Dangerous Symptoms</h5>
+                                                    <p className="text-sm font-bold text-rose-700 leading-relaxed">{currentSelectedItem.result.dangerous_symptoms}</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Globe className="w-3.5 h-3.5"/> Primary Causes</h5>
+                                                    <p className="text-sm font-medium text-slate-600 leading-relaxed">{currentSelectedItem.result.causes}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Shield className="w-3.5 h-3.5"/> Preventive Measures</h5>
+                                                    <p className="text-sm font-medium text-slate-600 leading-relaxed">{currentSelectedItem.result.prevention}</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Plus className="w-3.5 h-3.5"/> Recommended Treatment</h5>
+                                                    <p className="text-sm font-medium text-slate-600 leading-relaxed">{currentSelectedItem.result.treatment_suggestions}</p>
+                                                </div>
+                                                <div className="space-y-2 p-3 bg-violet-50 border border-violet-100 rounded-xl">
+                                                    <h5 className="text-[11px] font-black text-violet-600 uppercase tracking-widest flex items-center gap-2"><Stethoscope className="w-3.5 h-3.5"/> When to Consult a Doctor</h5>
+                                                    <p className="text-sm font-bold text-violet-800 leading-relaxed">{currentSelectedItem.result.when_to_consult}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="mt-6 p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
+                                            <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                                            <p className="text-xs font-bold text-amber-800 leading-relaxed">
+                                                {currentSelectedItem.result.disclaimer || "Predictions are AI-assisted and should not replace professional medical advice."}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
                                     <footer className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between relative z-10">
                                         <div className="flex items-center gap-4">
                                             <div className="p-3 bg-violet-600 text-white rounded-xl flex items-center justify-between shadow-premium min-w-[180px]">
@@ -606,7 +662,7 @@ export function UploadView({ setActiveView, authToken, onScanComplete }) {
 
                     {/* REDESIGNED UNCERTAIN PRESENTATION STATE (REPLACES "INVALID") */}
                     <AnimatePresence>
-                        {currentSelectedItem && currentSelectedItem.status === 'completed' && currentSelectedItem.result && !currentSelectedItem.result.is_valid && !currentSelectedItem.result.was_forced && (
+                        {currentSelectedItem && currentSelectedItem.status === 'completed' && currentSelectedItem.result && !currentSelectedItem.result.is_valid && (
                             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
                                 <Card className="p-6 border-2 border-dashed border-slate-200 bg-slate-50/10 flex flex-col items-center text-center gap-4 mt-4 rounded-3xl">
                                     <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center shadow-lg">

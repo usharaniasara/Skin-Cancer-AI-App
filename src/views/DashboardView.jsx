@@ -37,7 +37,7 @@ export function DashboardView({ user, setActiveView }) {
               </div>
               <div className="text-left">
                 <p className="text-[11px] font-black text-violet-600 uppercase tracking-widest leading-none mb-0.5">Authoritative Node</p>
-                <p className="text-sm font-black text-slate-900 leading-none">{user?.name || 'Harika'} Authenticated</p>
+                <p className="text-sm font-black text-slate-900 leading-none">{user?.name || 'Practitioner'} Authenticated</p>
               </div>
             </div>
             

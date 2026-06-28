@@ -18,7 +18,12 @@ import {
   HeartPulse,
   Zap,
   Check,
-  FileText
+  FileText,
+  Activity,
+  Globe,
+  Plus,
+  AlertCircle,
+  Shield
 } from 'lucide-react';
 
 export function RecordsView({ scans, setActiveView }) {
@@ -172,31 +177,60 @@ export function RecordsView({ scans, setActiveView }) {
                         </div>
                    </div>
 
-                   <div className={`rounded-2xl p-6 relative overflow-hidden ${selectedScan.is_malignant ? 'bg-rose-50/40 border border-rose-100' : 'bg-violet-50/40 border border-violet-100'}`}>
-                      <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
-                         <Stethoscope className="w-32 h-32 text-slate-900" />
-                      </div>
-                      
-                      <div className="relative z-10">
-                         <div className="flex items-center gap-2 mb-4">
-                            {selectedScan.is_malignant ? <ShieldAlert className="w-5 h-5 text-rose-600" /> : <HeartPulse className="w-5 h-5 text-violet-600" />}
-                            <h4 className={`text-[11px] font-black uppercase tracking-[0.2em] underline underline-offset-4 ${selectedScan.is_malignant ? 'text-rose-700 decoration-rose-200' : 'text-violet-700 decoration-violet-200'}`}>
-                                Registry Clinical Observations
-                            </h4>
-                         </div>
-                         <p className="text-slate-700 text-sm leading-relaxed font-medium">
-                            Historical entry for <span className="text-slate-950 font-bold uppercase">{selectedScan.location}</span>. 
-                            Automated pipeline classification: <span className={`${selectedScan.is_malignant ? 'text-rose-700' : 'text-violet-700'} font-extrabold uppercase`}>{selectedScan.prediction}</span> (CI: <span className={`${selectedScan.is_malignant ? 'text-rose-700' : 'text-violet-700'} font-black`}>{selectedScan.confidence}%</span>).
-                            
-                            <span className="block mt-2">
-                                {selectedScan.is_malignant ? (
-                                    "Specimen was flagged with malignancy presentation. Clinical priority was assigned to verify diagnostic markers."
-                                ) : (
-                                    "Clinical findings indicate a non-malignant condition. AI cross-referenced this presentation with standard benign distributions."
-                                )}
-                            </span>
-                         </p>
-                      </div>
+                   {/* Detailed Clinical Info */}
+                   <div className="mt-8 pt-6 border-t border-slate-50 relative z-10">
+                       <div className="flex items-center gap-3 mb-4">
+                           <Badge className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${
+                               selectedScan.severity === 'High' ? 'bg-rose-100 text-rose-700' :
+                               selectedScan.severity === 'Moderate' ? 'bg-amber-100 text-amber-700' :
+                               'bg-emerald-100 text-emerald-700'
+                           }`}>
+                               Severity: {selectedScan.severity || 'Unknown'}
+                           </Badge>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <div className="space-y-4">
+                               <div className="space-y-2">
+                                   <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Info className="w-3.5 h-3.5"/> Overview</h5>
+                                   <p className="text-sm font-medium text-slate-600 leading-relaxed">{selectedScan.explanation}</p>
+                               </div>
+                               <div className="space-y-2">
+                                   <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Activity className="w-3.5 h-3.5"/> Typical Symptoms</h5>
+                                   <p className="text-sm font-medium text-slate-600 leading-relaxed">{selectedScan.symptoms}</p>
+                               </div>
+                               <div className="space-y-2 p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                                   <h5 className="text-[11px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2"><ShieldAlert className="w-3.5 h-3.5"/> Dangerous Symptoms</h5>
+                                   <p className="text-sm font-bold text-rose-700 leading-relaxed">{selectedScan.dangerous_symptoms}</p>
+                               </div>
+                               <div className="space-y-2">
+                                   <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Globe className="w-3.5 h-3.5"/> Primary Causes</h5>
+                                   <p className="text-sm font-medium text-slate-600 leading-relaxed">{selectedScan.causes}</p>
+                               </div>
+                           </div>
+                           
+                           <div className="space-y-4">
+                               <div className="space-y-2">
+                                   <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Shield className="w-3.5 h-3.5"/> Preventive Measures</h5>
+                                   <p className="text-sm font-medium text-slate-600 leading-relaxed">{selectedScan.prevention}</p>
+                               </div>
+                               <div className="space-y-2">
+                                   <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Plus className="w-3.5 h-3.5"/> Recommended Treatment</h5>
+                                   <p className="text-sm font-medium text-slate-600 leading-relaxed">{selectedScan.treatment_suggestions}</p>
+                               </div>
+                               <div className="space-y-2 p-3 bg-violet-50 border border-violet-100 rounded-xl">
+                                   <h5 className="text-[11px] font-black text-violet-600 uppercase tracking-widest flex items-center gap-2"><Stethoscope className="w-3.5 h-3.5"/> When to Consult a Doctor</h5>
+                                   <p className="text-sm font-bold text-violet-800 leading-relaxed">{selectedScan.when_to_consult}</p>
+                               </div>
+                           </div>
+                       </div>
+                       
+                       <div className="mt-6 p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
+                           <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                           <p className="text-xs font-bold text-amber-800 leading-relaxed">
+                               {selectedScan.disclaimer || "Predictions are AI-assisted and should not replace professional medical advice."}
+                           </p>
+                       </div>
                    </div>
 
                     <div className="mt-8 flex justify-end gap-2 pt-6 border-t border-slate-50">

@@ -18,7 +18,7 @@ import { AnimatePresence, motion } from 'framer-motion'; // eslint-disable-line 
  */
 function App() {
   // --- Authentication State ---
-  const [authToken, setAuthToken] = useState(localStorage.getItem('nebula_token'));
+  const [authToken, setAuthToken] = useState(sessionStorage.getItem('nebula_token'));
   const [user, setUser] = useState(null);
 
   // --- Core Data State ---
@@ -30,12 +30,12 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLegalOpen, setIsLegalOpen] = useState(false);
 
-  // Sync token to local storage
+  // Sync token to session storage
   useEffect(() => {
     if (authToken) {
-      localStorage.setItem('nebula_token', authToken);
+      sessionStorage.setItem('nebula_token', authToken);
     } else {
-      localStorage.removeItem('nebula_token');
+      sessionStorage.removeItem('nebula_token');
     }
   }, [authToken]);
 

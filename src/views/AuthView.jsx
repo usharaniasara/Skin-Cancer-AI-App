@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Fingerprint, ShieldAlert, Cpu, Sparkles, Globe, User as UserIcon, ChevronRight, Check, Mail } from 'lucide-react';
+import { Lock, Fingerprint, ShieldAlert, Cpu, Sparkles, Globe, User as UserIcon, ChevronRight, Check, Mail, KeyRound } from 'lucide-react';
 
 /**
- * AuthView: Handles user registration and login.
+ * AuthView: Handles user registration, login, and password resets with OTP Verification.
  * Transitioned to 'Clinical Violet' identity with professional light-mode aesthetic.
  */
 export function AuthView({ setAuthToken }) {
   // --- UI View State ---
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [isOtpMode, setIsOtpMode] = useState(false);
+  const [isForgotMode, setIsForgotMode] = useState(false);
+  const [isResetOtpMode, setIsResetOtpMode] = useState(false);
+  
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +23,8 @@ export function AuthView({ setAuthToken }) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: ''
+    name: '',
+    newPassword: ''
   });
   const [otpCode, setOtpCode] = useState('');
 
@@ -33,16 +37,29 @@ export function AuthView({ setAuthToken }) {
    */
   const handleAuthSubmit = async (event) => {
     event.preventDefault();
-    if (!formData.email || !formData.password || (!isLoginMode && !formData.name)) {
+    if (!formData.email || (!isForgotMode && !formData.password) || (!isForgotMode && !isLoginMode && !formData.name)) {
       setErrorMessage('Please provide all clinical credentials.');
       setSuccessMessage('');
+      return;
+    }
+
+    // Client-side validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+    
+    if (!isForgotMode && formData.password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
       return;
     }
 
     setErrorMessage('');
     setSuccessMessage('');
     setIsSubmitting(true);
-    const endpoint = isLoginMode ? '/api/login' : '/api/register';
+    
+    const endpoint = isForgotMode ? '/api/forgot-password' : (isLoginMode ? '/api/login' : '/api/register');
     
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
@@ -53,12 +70,15 @@ export function AuthView({ setAuthToken }) {
       
       const data = await response.json();
       if (response.ok) {
-        if (data.requires_otp) {
+        if (isForgotMode) {
+           setIsResetOtpMode(true);
+           setSuccessMessage(data.message || 'Reset code sent to your email.');
+        } else if (data.requires_otp) {
           setIsOtpMode(true);
           setSuccessMessage(data.message || 'OTP sent to your email.');
         } else if (data.registered) {
           setIsLoginMode(true);
-          setSuccessMessage(data.message || 'Account created successfully. You can now login with your credentials for OTP verification.');
+          setSuccessMessage(data.message || 'Account created successfully. You can now login.');
           setFormData(prev => ({ ...prev, password: '' }));
         } else {
           setAuthToken(data.token);
@@ -79,20 +99,38 @@ export function AuthView({ setAuthToken }) {
       setErrorMessage('Please enter the 6-digit clinical verification code.');
       return;
     }
+    
+    if (isResetOtpMode && formData.newPassword.length < 6) {
+       setErrorMessage('New password must be at least 6 characters.');
+       return;
+    }
+
     setErrorMessage('');
     setSuccessMessage('');
     setIsSubmitting(true);
     
+    const endpoint = isResetOtpMode ? '/api/reset-password' : '/api/verify-otp';
+    const payload = isResetOtpMode ? { email: formData.email, otp_code: otpCode, new_password: formData.newPassword } : { email: formData.email, otp_code: otpCode };
+    
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/verify-otp`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, otp_code: otpCode })
+        body: JSON.stringify(payload)
       });
       
       const data = await response.json();
       if (response.ok) {
-        setAuthToken(data.token);
+        if (isResetOtpMode) {
+            setSuccessMessage(data.message || 'Password reset successfully.');
+            setIsForgotMode(false);
+            setIsResetOtpMode(false);
+            setIsLoginMode(true);
+            setFormData(prev => ({ ...prev, password: '', newPassword: '' }));
+            setOtpCode('');
+        } else {
+            setAuthToken(data.token);
+        }
       } else {
         setErrorMessage(data.error || 'Invalid verification code.');
       }
@@ -101,6 +139,36 @@ export function AuthView({ setAuthToken }) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetState = () => {
+      setIsOtpMode(false);
+      setIsForgotMode(false);
+      setIsResetOtpMode(false);
+      setErrorMessage('');
+      setSuccessMessage('');
+      setOtpCode('');
+  };
+
+  const getTitle = () => {
+      if (isResetOtpMode) return 'Create New Password';
+      if (isForgotMode) return 'Recover Account';
+      if (isOtpMode) return 'Security Verification';
+      return isLoginMode ? 'Clinician Entry' : 'Clinical Registration';
+  };
+  
+  const getSubtitle = () => {
+      if (isResetOtpMode) return 'Enter the reset code and your new password.';
+      if (isForgotMode) return 'Enter your registry email to receive a reset code.';
+      if (isOtpMode) return 'Enter the 6-digit code sent to your email.';
+      return 'Authorized diagnostic synchronization only.';
+  };
+
+  const getButtonText = () => {
+      if (isResetOtpMode) return 'Confirm Password Reset';
+      if (isForgotMode) return 'Send Reset Code';
+      if (isOtpMode) return 'Verify Clinical Access';
+      return isLoginMode ? 'Initialize Sync' : 'Grant Registry Access';
   };
 
   return (
@@ -131,16 +199,16 @@ export function AuthView({ setAuthToken }) {
         <Card className="p-10 premium-card border-violet-100 bg-white shadow-2xl relative rounded-[2.5rem] overflow-hidden">
           <div className="text-center mb-12">
             <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase mb-2">
-              {isOtpMode ? 'Security Verification' : (isLoginMode ? 'Clinician Entry' : 'Clinical Registration')}
+              {getTitle()}
             </h2>
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] px-10 leading-relaxed">
-              {isOtpMode ? 'Enter the 6-digit code sent to your email.' : 'Authorized diagnostic synchronization only.'}
+              {getSubtitle()}
             </p>
           </div>
 
-          <form onSubmit={isOtpMode ? handleOtpSubmit : handleAuthSubmit} className="space-y-6">
+          <form onSubmit={(isOtpMode || isResetOtpMode) ? handleOtpSubmit : handleAuthSubmit} className="space-y-6">
             <AnimatePresence mode="wait">
-              {!isOtpMode && !isLoginMode && (
+              {!isOtpMode && !isResetOtpMode && !isLoginMode && !isForgotMode && (
                 <motion.div 
                   key="name-field"
                   initial={{ opacity: 0, height: 0 }} 
@@ -162,7 +230,7 @@ export function AuthView({ setAuthToken }) {
               )}
             </AnimatePresence>
             
-            {!isOtpMode ? (
+            {(!isOtpMode && !isResetOtpMode) ? (
               <>
                 <div className="group/field">
                   <label className="text-[11px] font-black uppercase tracking-widest ml-1 mb-3 block text-slate-400 group-focus-within/field:text-violet-600 transition-colors">Email Registry</label>
@@ -177,46 +245,72 @@ export function AuthView({ setAuthToken }) {
                   </div>
                 </div>
                 
-                <div className="group/field">
-                  <label className="text-[11px] font-black uppercase tracking-widest ml-1 mb-3 block text-slate-400 group-focus-within/field:text-violet-600 transition-colors">Security Key</label>
-                  <div className="relative">
-                    <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within/field:text-violet-600 transition-colors" />
-                    <input 
-                      type="password" 
-                      placeholder="••••••••"
-                      className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-12 font-bold text-sm text-slate-900 focus:outline-none focus:border-violet-600 focus:bg-white transition-all shadow-inner"
-                      value={formData.password} onChange={e => handleInputChange('password', e.target.value)}
-                    />
-                  </div>
-                </div>
+                {!isForgotMode && (
+                    <div className="group/field">
+                      <div className="flex justify-between items-end mb-3 ml-1">
+                          <label className="text-[11px] font-black uppercase tracking-widest block text-slate-400 group-focus-within/field:text-violet-600 transition-colors">Security Key</label>
+                          {isLoginMode && (
+                              <button type="button" onClick={() => {resetState(); setIsForgotMode(true);}} className="text-[10px] font-black uppercase tracking-widest text-violet-500 hover:text-violet-700">
+                                  Forgot Password?
+                              </button>
+                          )}
+                      </div>
+                      <div className="relative">
+                        <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within/field:text-violet-600 transition-colors" />
+                        <input 
+                          type="password" 
+                          placeholder="••••••••"
+                          className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-12 font-bold text-sm text-slate-900 focus:outline-none focus:border-violet-600 focus:bg-white transition-all shadow-inner"
+                          value={formData.password} onChange={e => handleInputChange('password', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                )}
               </>
             ) : (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group/field">
-                <label className="text-[11px] font-black uppercase tracking-widest ml-1 mb-3 block text-slate-400 group-focus-within/field:text-violet-600 transition-colors">Verification Code</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within/field:text-violet-600 transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="123456"
-                    maxLength={6}
-                    className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-12 font-bold text-lg tracking-[0.5em] text-slate-900 focus:outline-none focus:border-violet-600 focus:bg-white transition-all shadow-inner text-center"
-                    value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  />
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                <div className="group/field">
+                    <label className="text-[11px] font-black uppercase tracking-widest ml-1 mb-3 block text-slate-400 group-focus-within/field:text-violet-600 transition-colors">Verification Code</label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within/field:text-violet-600 transition-colors" />
+                      <input 
+                        type="text" 
+                        placeholder="123456"
+                        maxLength={6}
+                        className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-12 font-bold text-lg tracking-[0.5em] text-slate-900 focus:outline-none focus:border-violet-600 focus:bg-white transition-all shadow-inner text-center"
+                        value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      />
+                    </div>
                 </div>
+
+                {isResetOtpMode && (
+                    <div className="group/field">
+                        <label className="text-[11px] font-black uppercase tracking-widest ml-1 mb-3 block text-slate-400 group-focus-within/field:text-violet-600 transition-colors">New Password</label>
+                        <div className="relative">
+                            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within/field:text-violet-600 transition-colors" />
+                            <input 
+                                type="password" 
+                                placeholder="••••••••"
+                                className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-12 font-bold text-sm text-slate-900 focus:outline-none focus:border-violet-600 focus:bg-white transition-all shadow-inner"
+                                value={formData.newPassword} onChange={e => handleInputChange('newPassword', e.target.value)}
+                            />
+                        </div>
+                    </div>
+                )}
               </motion.div>
             )}
 
             {errorMessage && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
-                <ShieldAlert className="w-5 h-5 text-rose-500" />
-                <p className="text-[11px] font-black text-rose-600 uppercase tracking-widest">{errorMessage}</p>
+                <ShieldAlert className="w-5 h-5 text-rose-500 shrink-0" />
+                <p className="text-[11px] font-black text-rose-600 uppercase tracking-widest leading-relaxed">{errorMessage}</p>
               </motion.div>
             )}
 
             {successMessage && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3">
-                <Check className="w-5 h-5 text-emerald-500" />
-                <p className="text-[11px] font-black text-emerald-600 uppercase tracking-widest">{successMessage}</p>
+                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                <p className="text-[11px] font-black text-emerald-600 uppercase tracking-widest leading-relaxed">{successMessage}</p>
               </motion.div>
             )}
 
@@ -226,7 +320,7 @@ export function AuthView({ setAuthToken }) {
               isLoading={isSubmitting}
             >
               <Cpu className="w-5 h-5" />
-              {isOtpMode ? 'Verify Clinical Access' : (isLoginMode ? 'Initialize Sync' : 'Grant Registry Access')}
+              {getButtonText()}
             </Button>
           </form>
 
@@ -234,17 +328,17 @@ export function AuthView({ setAuthToken }) {
             <button 
               type="button"
               onClick={() => { 
-                if (isOtpMode) {
-                  setIsOtpMode(false);
+                if (isOtpMode || isResetOtpMode || isForgotMode) {
+                    resetState();
+                    setIsLoginMode(true);
                 } else {
-                  setIsLoginMode(!isLoginMode); 
+                    resetState();
+                    setIsLoginMode(!isLoginMode); 
                 }
-                setErrorMessage(''); 
-                setSuccessMessage(''); 
               }} 
               className="text-[11px] font-black text-slate-400 uppercase tracking-widest hover:text-violet-600 transition-colors flex items-center justify-center gap-2 mx-auto"
             >
-              {isOtpMode ? "Back to Login" : (isLoginMode ? "Need Clinical Access?" : "Existing Practitioner Details")} <ChevronRight className="w-4 h-4" />
+              {(isOtpMode || isResetOtpMode || isForgotMode) ? "Back to Login" : (isLoginMode ? "Need Clinical Access?" : "Existing Practitioner Details")} <ChevronRight className="w-4 h-4" />
             </button>
           </footer>
         </Card>

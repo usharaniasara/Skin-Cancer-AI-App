@@ -10,18 +10,54 @@ export function ChatWidget() {
     { id: 1, role: 'assistant', content: "Dermisyn Clinical Assistant active. How can I assist with specimen classification or protocol verification?", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
   ]);
 
-  const handleSend = () => {
+  const [isTyping, setIsTyping] = useState(false);
+
+  const handleSend = async () => {
     if (!input.trim()) return;
     
-    const userMsg = { id: Date.now(), role: 'user', content: input, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-    setMessages(prev => [...prev, userMsg]);
+    const currentInput = input;
+    const userMsg = { role: 'user', content: currentInput, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+    const newMessages = [...messages, userMsg];
+    
+    setMessages(newMessages);
     setInput('');
+    setIsTyping(true);
 
-    // Simulated AI Response
-    setTimeout(() => {
-      const aiMsg = { id: Date.now() + 1, role: 'assistant', content: "Query acknowledged. Localizing clinical markers to ISIC standards... The requested protocol is currently being synchronized with the registry.", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiBaseUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          message: currentInput,
+          history: newMessages.slice(1, -1) // Exclude the initial greeting and the current message to save tokens/context if needed, or pass all
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      const aiMsg = { 
+        role: 'assistant', 
+        content: data.response || "I apologize, but my diagnostic link is currently unstable. Please try again.", 
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+      };
+      
       setMessages(prev => [...prev, aiMsg]);
-    }, 1000);
+    } catch (error) {
+      const errorMsg = { 
+        role: 'assistant', 
+        content: "Error: Connection to AI core lost. Please check your network or API keys.", 
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -75,20 +111,30 @@ export function ChatWidget() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide bg-slate-50/50">
-              {messages.map((msg) => (
-                <div key={msg.id} className="flex flex-col">
+              {messages.map((msg, index) => (
+                <div key={index} className="flex flex-col">
                   <div className={`p-3 rounded-2xl max-w-[85%] text-sm font-medium shadow-sm transition-all ${
                     msg.role === 'user' 
                     ? 'bg-violet-600 text-white ml-auto rounded-tr-none' 
                     : 'bg-white text-slate-800 mr-auto rounded-tl-none border border-violet-100'
                   }`}>
-                    <p className="leading-relaxed">{msg.content}</p>
+                    <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                   </div>
                   <p className={`text-[10px] font-black uppercase tracking-widest text-slate-300 mt-1.5 ${msg.role === 'user' ? 'text-right mr-1' : 'ml-1'}`}>
                     {msg.role === 'user' ? 'Clinician' : 'Dermisyn AI'} • {msg.timestamp}
                   </p>
                 </div>
               ))}
+              
+              {isTyping && (
+                <div className="flex flex-col mr-auto">
+                  <div className="p-4 rounded-2xl bg-white text-slate-800 rounded-tl-none border border-violet-100 shadow-sm flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Input */}
